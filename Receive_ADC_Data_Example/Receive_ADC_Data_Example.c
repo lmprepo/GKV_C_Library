@@ -8,14 +8,14 @@ HANDLE hSerial;
 char ReadCOM();
 void WriteCOM(PacketBase* buf);
 void RecognisePacket(PacketBase* buf);
-
+char* cin(int* length);
 
 int main()
 {
-    char com_port[128];
+    int length = 0;
 
     printf("Set Serial Port:");
-    gets(com_port);
+    char* com_port = cin(&length);
 
 
     printf ("#start connecting to %s\n", com_port);
@@ -87,11 +87,26 @@ int main()
         InputStructure.GKV_Byte = ReadCOM();
         GKV_Process(RecognisePacket, &InputStructure);
     }
-
-
     return 0;
 }
 
+
+char* cin(int* length) {
+    *length = 0;
+    int capacity = 1;
+    char* str = (char*)malloc(sizeof(char));
+    char sym = getchar();
+    while (sym != '\n') {
+        str[(*length)++] = sym;
+        if (*length >= capacity) {
+            capacity *= 2;
+            str = (char*)realloc(str, capacity * sizeof(char));
+        }
+        sym = getchar();
+    }
+    str[*length] = '\0';
+    return str;
+}
 
 void WriteCOM(PacketBase* buf)
 {
