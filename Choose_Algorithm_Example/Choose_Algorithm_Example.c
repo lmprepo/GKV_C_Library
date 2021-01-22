@@ -1,7 +1,4 @@
-﻿// GKV_1_Console_Show_ADC.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
-#include <windows.h>
+﻿#include <windows.h>
 #include <stdio.h>
 #include <GKV_CommunicationLibrary.h>
 
@@ -225,6 +222,8 @@ char ReadCOM()
             return sReceivedChar;
     }
 }
+
+/* User Callback on any Received Packet */
 
 void RecognisePacket(PacketBase* buf)
 {
