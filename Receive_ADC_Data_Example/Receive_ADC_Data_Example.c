@@ -12,9 +12,11 @@ void RecognisePacket(PacketBase* buf);
 
 int main()
 {
-    char com_port[] = "COM9";
+    char com_port[128];
 
-    printf("Set Serial Port:%s\n", com_port);
+    printf("Set Serial Port:");
+    gets(com_port);
+
 
     printf ("#start connecting to %s\n", com_port);
 
