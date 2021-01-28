@@ -4,6 +4,7 @@
 
 HANDLE hSerial;
 
+uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
 void WriteCOM(PacketBase* buf);
 void RecognisePacket(PacketBase* buf);
@@ -27,37 +28,8 @@ int main()
 
     InitInput InputStructure;
     GKV_Init_Input(&InputStructure);
-
-    hSerial = CreateFile(com_port, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (hSerial == INVALID_HANDLE_VALUE)
-    {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND)
-        {
-            printf("serial port does not exist.\n");
-            return 1;
-        }
-        printf("some other error occurred.\n");
-        return 1;
-    }
-    printf("#connect ok\n");
-    DCB dcbSerialParams = { 0 };
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("getting state error\n");
-        return 1;
-    }
-    printf("#get state ok\n");
-    dcbSerialParams.BaudRate = 921600;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-    if (!SetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("error setting serial port state\n");
-        return 1;
-    }
-    printf("#set state ok, waiting for data...\n");
+    /* Connect to Selected serial port*/
+    if (!(InitSerialPort(com_port, 921600))) return 1;
 
     printf("Choose GKV algorithm:\n");
     printf("0 - ADC Codes Data from Sensors\n");
@@ -71,6 +43,7 @@ int main()
     printf("9 - Navigation Data GNSS+BINS type 2\n");
 
     printf( "Selected Algorithm = ");
+    /* Select Algorithm Number and Check It */
     char* alg_string = NULL;
     do
     {
@@ -88,7 +61,7 @@ int main()
     } while (!(check_input(alg_string, length)));
 
     algorithm_packet = ChooseAlgorithmPacket(algorithm);
-    //Set_Custom_Packet_Params(WriteCOM, sizeof(custom_parameters), &custom_parameters[0]);//функция настройки наборного пакета
+    //Set_Custom_Packet_Params(WriteCOM, sizeof(custom_parameters), &custom_parameters[0]);//функция настройки параметров наборного пакета
 
     /* Waiting for device connection and selecting algorithm */
     while (!(algorithm_selected))
@@ -113,6 +86,42 @@ int main()
         InputStructure.GKV_Byte = ReadCOM();
         GKV_Process(RecognisePacket, &InputStructure);
     }
+    return 0;
+}
+
+uint8_t InitSerialPort(char* port_name, int32_t baudrate)
+{
+    hSerial = CreateFile(port_name, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (hSerial == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            printf("serial port does not exist.\n");
+            return 0;
+        }
+        printf("some other error occurred.\n");
+        return 0;
+    }
+    printf("#connect ok\n");
+    DCB dcbSerialParams = { 0 };
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+    if (!GetCommState(hSerial, &dcbSerialParams))
+    {
+        printf("getting state error\n");
+        return 0;
+    }
+    printf("#get state ok\n");
+    dcbSerialParams.BaudRate = baudrate;
+    dcbSerialParams.ByteSize = 8;
+    dcbSerialParams.StopBits = ONESTOPBIT;
+    dcbSerialParams.Parity = NOPARITY;
+    if (!SetCommState(hSerial, &dcbSerialParams))
+    {
+        printf("error setting serial port state\n");
+        return 0;
+    }
+    printf("#set state ok, waiting for data...\n");
+    return 1;
 }
 
 char* cin(int* length) {

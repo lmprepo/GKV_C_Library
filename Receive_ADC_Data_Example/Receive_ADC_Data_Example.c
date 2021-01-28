@@ -4,6 +4,7 @@
 
 HANDLE hSerial;
 
+uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
 void WriteCOM(PacketBase* buf);
 void RecognisePacket(PacketBase* buf);
@@ -25,36 +26,7 @@ int main()
     GKV_Init_Input(&InputStructure);
     /* Connect to Selected serial port*/
     printf("#start connecting to %s\n", com_port);
-    hSerial = CreateFile(com_port, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (hSerial == INVALID_HANDLE_VALUE)
-    {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND)
-        {
-            printf("serial port does not exist.\n");
-            return 1;
-        }
-        printf("some other error occurred.\n");
-        return 1;
-    }
-    printf("#connect ok\n");
-    DCB dcbSerialParams = { 0 };
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("getting state error\n");
-        return 1;
-    }
-    printf("#get state ok\n");
-    dcbSerialParams.BaudRate = 921600;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-    if (!SetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("error setting serial port state\n");
-        return 1;
-    }
-    printf("#set state ok, waiting for data...\n");
+    if (!(InitSerialPort(com_port, 921600))) return 1;
     /* Waiting for device connection and selecting algorithm */
     const int MAX_INCORRECT_CNT = 1000;
     int incorrectCnt = 0;
@@ -88,6 +60,41 @@ int main()
     return 0;
 }
 
+
+uint8_t InitSerialPort(char* port_name, int32_t baudrate)
+{
+    hSerial = CreateFile(port_name, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (hSerial == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            printf("serial port does not exist.\n");
+            return 0;
+        }
+        printf("some other error occurred.\n");
+        return 0;
+    }
+    printf("#connect ok\n");
+    DCB dcbSerialParams = { 0 };
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+    if (!GetCommState(hSerial, &dcbSerialParams))
+    {
+        printf("getting state error\n");
+        return 0;
+    }
+    printf("#get state ok\n");
+    dcbSerialParams.BaudRate = baudrate;
+    dcbSerialParams.ByteSize = 8;
+    dcbSerialParams.StopBits = ONESTOPBIT;
+    dcbSerialParams.Parity = NOPARITY;
+    if (!SetCommState(hSerial, &dcbSerialParams))
+    {
+        printf("error setting serial port state\n");
+        return 0;
+    }
+    printf("#set state ok, waiting for data...\n");
+    return 1;
+}
 
 char* cin(int* length) {
     *length = 0;
