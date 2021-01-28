@@ -1,4 +1,5 @@
-﻿#include <windows.h>
+﻿#ifdef _WIN32
+#include <windows.h>
 #include <stdio.h>
 #include <GKV_CommunicationLibrary.h>
 
@@ -402,3 +403,8 @@ void RecognisePacket(PacketBase* buf)
     // не посылает запроса на получение номеров парамеров наборного пакета и выводит все параметры, как float.
     }
 }
+#else
+int main()
+{
+}
+#endif

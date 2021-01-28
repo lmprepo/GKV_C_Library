@@ -1,9 +1,13 @@
-﻿#ifdef _WIN32
-#include <windows.h>
+﻿#ifdef __linux
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>     
+#include <fcntl.h>      
+#include <termios.h> 
 #include <stdio.h>
 #include <GKV_CommunicationLibrary.h>
 
-HANDLE hSerial;
+int SerialPortHandle;
 
 uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
@@ -26,7 +30,7 @@ int main()
     GKV_Init_Input(&InputStructure);
     /* Connect to Selected serial port*/
     printf("#start connecting to %s\n", com_port);
-    if (!(InitSerialPort(com_port, 921600))) return 1;
+    if (!(InitSerialPort(com_port, B921600))) return 1;
     /* Waiting for device connection and selecting algorithm */
     const int MAX_INCORRECT_CNT = 1000;
     int incorrectCnt = 0;
@@ -62,36 +66,42 @@ int main()
 
 uint8_t InitSerialPort(char* port_name, int32_t baudrate)
 {
-    hSerial = CreateFile(port_name, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (hSerial == INVALID_HANDLE_VALUE)
-    {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND)
-        {
-            printf("serial port does not exist.\n");
-            return 0;
-        }
-        printf("some other error occurred.\n");
+    SerialPortHandle = open(port_name, O_RDWR | O_NOCTTY);
+    if (SerialPortHandle < 0) {
+        printf("Error opening port\n");
         return 0;
     }
-    printf("#connect ok\n");
-    DCB dcbSerialParams = { 0 };
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("getting state error\n");
+    struct termios tty;
+    struct termios tty_old;
+    memset(&tty, 0, sizeof(tty));
+    /* Error Handling */
+    if (tcgetattr(SerialPortHandle, &tty) != 0) {
+        printf("Error connect termios to port\n");
         return 0;
     }
-    printf("#get state ok\n");
-    dcbSerialParams.BaudRate = baudrate;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-    if (!SetCommState(hSerial, &dcbSerialParams))
-    {
-        printf("error setting serial port state\n");
+    /* Save old tty parameters */
+    tty_old = tty;
+    /* Set Baud Rate */
+    cfsetospeed(&tty, (speed_t)baudrate);
+    cfsetispeed(&tty, (speed_t)baudrate);
+    /* Setting other Port Stuff */
+    tty.c_cflag &= ~PARENB;            // Make 8n1
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;
+
+    tty.c_cflag &= ~CRTSCTS;           // no flow control
+    tty.c_cc[VMIN] = 1;                  // read doesn't block
+    tty.c_cc[VTIME] = 5;                  // 0.5 seconds read timeout
+    tty.c_cflag |= CREAD | CLOCAL;     // turn on READ & ignore ctrl lines
+    /* Make raw */
+    cfmakeraw(&tty);
+    /* Flush Port, then applies attributes */
+    tcflush(SerialPortHandle, TCIFLUSH);
+    if (tcsetattr(SerialPortHandle, TCSANOW, &tty) != 0) {
+        printf("Error setting port parameters\n");
         return 0;
     }
-    printf("#set state ok, waiting for data...\n");
     return 1;
 }
 
@@ -114,20 +124,19 @@ char* cin(int* length) {
 
 void WriteCOM(PacketBase* buf)
 {
-    DWORD dwBytesWritten;
-    char iRet = WriteFile(hSerial, buf, buf->length + 8, &dwBytesWritten, NULL);
+    int iOut = write(SerialPortHandle, buf, buf->length + 8);
+    usleep(1000);
 }
 
 char ReadCOM()
 {
-    DWORD iSize;
     char sReceivedChar;
     while (true)
     {
-        ReadFile(hSerial, &sReceivedChar, 1, &iSize, 0);
-        if (iSize > 0)
-            return sReceivedChar;
+        int iOut = read(SerialPortHandle, &sReceivedChar, 1);
+        return sReceivedChar;
     }
+    return 0;
 }
 
 /* User Callback on any Received Packet */
