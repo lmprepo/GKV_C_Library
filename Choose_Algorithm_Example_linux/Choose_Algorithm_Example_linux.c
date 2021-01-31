@@ -32,8 +32,10 @@ int main()
     uint8_t algorithm_packet = GKV_ADC_CODES_PACKET;
     uint8_t algorithm_selected = 0;
 
-    InitInput InputStructure;
-    GKV_Init_Input(&InputStructure);
+    GKV_Device GKV;
+    Init_GKV_Device(&GKV);
+    GKV.ptrRecognisePacketCallback = RecognisePacket;
+    GKV.ptrDataSendFunction = WriteCOM;
     /* Connect to Selected serial port */
     if (!(InitSerialPort(com_port, B921600))) return 1;
 
@@ -67,21 +69,20 @@ int main()
     } while (!(check_input(alg_string, length)));
 
     algorithm_packet = ChooseAlgorithmPacket(algorithm);
-    //Set_Custom_Packet_Params(WriteCOM, sizeof(custom_parameters), &custom_parameters[0]);//функция настройки параметров наборного пакета
+    //Set_Custom_Packet_Params(&GKV, sizeof(custom_parameters), &custom_parameters[0]);//функция настройки параметров наборного пакета
 
     /* Waiting for device connection and selecting algorithm */
     while (!(algorithm_selected))
     {
-        Set_Default_Algorithm_Packet(WriteCOM);//функция выбора пакета алгоритма по умолчанию
-        //Set_Custom_Algorithm_Packet(WriteCOM);//функция выбора наборного пакета
-        Set_Algorithm(WriteCOM, algorithm);
+        Set_Default_Algorithm_Packet(&GKV);//функция выбора пакета алгоритма по умолчанию
+        //Set_Custom_Algorithm_Packet(&GKV);//функция выбора наборного пакета
+        Set_Algorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
         {
-            InputStructure.GKV_Byte = ReadCOM();
-            Packet_is_Correct = GKV_Process(RecognisePacket, &InputStructure);
+            Packet_is_Correct = GKV_ReceiveProcess(&GKV, ReadCOM());
         }
-        if (InputStructure.InputPacket.type == algorithm_packet)
+        if (GKV.InputBuffer.type == algorithm_packet)
         {
             algorithm_selected = 1;
         }
@@ -89,8 +90,7 @@ int main()
     /* Receive Data for Selected algorithm */
     while (1)
     {
-        InputStructure.GKV_Byte = ReadCOM();
-        GKV_Process(RecognisePacket, &InputStructure);
+        GKV_ReceiveProcess(&GKV, ReadCOM());
     }
     return 0;
 }

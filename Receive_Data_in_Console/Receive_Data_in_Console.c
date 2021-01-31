@@ -18,16 +18,17 @@ int main()
     printf("Set Serial Port:");
     char* com_port = cin(&length);
     /* Init GKV Receive Data Structure */
-    InitInput InputStructure;
-    GKV_Init_Input(&InputStructure);
+    GKV_Device GKV;
+    Init_GKV_Device(&GKV);
+    GKV.ptrRecognisePacketCallback = RecognisePacket;
+    GKV.ptrDataSendFunction = WriteCOM;
     /* Connect to Selected serial port*/
     printf("#start connecting to %s\n", com_port);
     if (!(InitSerialPort(com_port, 921600))) return 1;
     /* Read Data From GKV in Main Cycle */
     while (1)
     {
-        InputStructure.GKV_Byte = ReadCOM();
-        GKV_Process(RecognisePacket, &InputStructure);
+        GKV_ReceiveProcess(&GKV, ReadCOM());
     }
     return 0;
 }

@@ -26,8 +26,10 @@ int main()
     printf("Set Serial Port:");
     char* com_port = cin(&length);
     /* Init GKV Receive Data Structure */
-    InitInput InputStructure;
-    GKV_Init_Input(&InputStructure);
+    GKV_Device GKV;
+    Init_GKV_Device(&GKV);
+    GKV.ptrRecognisePacketCallback = RecognisePacket;
+    GKV.ptrDataSendFunction = WriteCOM;
     /* Connect to Selected serial port*/
     printf("#start connecting to %s\n", com_port);
     if (!(InitSerialPort(com_port, B921600))) return 1;
@@ -36,12 +38,11 @@ int main()
     int incorrectCnt = 0;
     while (!(algorithm_selected))
     {
-        Set_Algorithm(WriteCOM, algorithm);
+        Set_Algorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
         {
-            InputStructure.GKV_Byte = ReadCOM();
-            Packet_is_Correct = GKV_Process(RecognisePacket, &InputStructure);
+            Packet_is_Correct = GKV_ReceiveProcess(&GKV, ReadCOM());
             incorrectCnt++;
             if (incorrectCnt > MAX_INCORRECT_CNT)
             {
@@ -49,7 +50,7 @@ int main()
                return 1;
             }
         }
-        if (InputStructure.InputPacket.type == algorithm_packet)
+        if (GKV.InputBuffer.type == algorithm_packet)
         {
             algorithm_selected = 1;
         }
@@ -58,8 +59,7 @@ int main()
     /* Receive Data for Selected algorithm */
     while (1)
     {
-        InputStructure.GKV_Byte = ReadCOM();
-        GKV_Process(RecognisePacket, &InputStructure);
+        GKV_ReceiveProcess(&GKV, ReadCOM());
     }
     return 0;
 }
