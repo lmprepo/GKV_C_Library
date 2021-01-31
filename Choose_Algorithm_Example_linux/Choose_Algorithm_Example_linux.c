@@ -12,8 +12,8 @@ int SerialPortHandle;
 
 uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
-void WriteCOM(PacketBase* buf);
-void RecognisePacket(PacketBase* buf);
+void WriteCOM(GKV_PacketBase* buf);
+void RecognisePacket(GKV_PacketBase* buf);
 uint8_t ChooseAlgorithmPacket(uint8_t algorithm);
 uint8_t check_input(char* str, int length);
 char* cin(int* length);
@@ -74,9 +74,9 @@ int main()
     /* Waiting for device connection and selecting algorithm */
     while (!(algorithm_selected))
     {
-        Set_Default_Algorithm_Packet(&GKV);//функция выбора пакета алгоритма по умолчанию
-        //Set_Custom_Algorithm_Packet(&GKV);//функция выбора наборного пакета
-        Set_Algorithm(&GKV, algorithm);
+        GKV_SetDefaultAlgorithmPacket(&GKV);//функция выбора пакета алгоритма по умолчанию
+        //GKV_SetCustomAlgorithmPacket(&GKV);//функция выбора наборного пакета
+        GKV_SetAlgorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
         {
@@ -176,47 +176,47 @@ uint8_t ChooseAlgorithmPacket(uint8_t algorithm)
 {
     switch (algorithm)
     {
-    case ADC_CODES_ALGORITHM:
+    case GKV_ADC_CODES_ALGORITHM:
     {
         return GKV_ADC_CODES_PACKET;
         break;
     }
-    case SENSORS_DATA_ALGORITHM:
+    case GKV_SENSORS_DATA_ALGORITHM:
     {
         return GKV_RAW_DATA_PACKET;
         break;
     }
-    case ORIENTATION_KALMAN_ALGORITHM:
+    case GKV_ORIENTATION_KALMAN_ALGORITHM:
     {
         return GKV_EULER_ANGLES_PACKET;
         break;
     }
-    case INCLINOMETER_ALGORITHM:
+    case GKV_INCLINOMETER_ALGORITHM:
     {
         return GKV_INCLINOMETER_PACKET;
         break;
     }
-    case ORIENTATION_MAHONY_ALGORITHM:
+    case GKV_ORIENTATION_MAHONY_ALGORITHM:
     {
         return GKV_EULER_ANGLES_PACKET;
         break;
     }
-    case BINS_NAVIGATON_ALGORITHM:
+    case GKV_BINS_NAVIGATON_ALGORITHM:
     {
         return GKV_BINS_PACKET;
         break;
     }
-    case CUSTOM_ALGORITHM:
+    case GKV_CUSTOM_ALGORITHM:
     {
         return GKV_ADC_CODES_PACKET;
         break;
     }
-    case KALMAN_GNSS_NAVIGATON_ALGORITHM:
+    case GKV_KALMAN_GNSS_NAVIGATON_ALGORITHM:
     {
         return GKV_GNSS_PACKET;
         break;
     }
-    case ESKF5_NAVIGATON_ALGORITHM:
+    case GKV_ESKF5_NAVIGATON_ALGORITHM:
     {
         return GKV_GNSS_PACKET;
         break;
@@ -227,7 +227,7 @@ uint8_t ChooseAlgorithmPacket(uint8_t algorithm)
     }
 }
 
-void WriteCOM(PacketBase* buf)
+void WriteCOM(GKV_PacketBase* buf)
 {
     int iOut = write(SerialPortHandle, buf, buf->length + 8);
     usleep(1000);
@@ -246,7 +246,7 @@ char ReadCOM()
 
 /* User Callback on any Received Packet */
 
-void RecognisePacket(PacketBase* buf)
+void RecognisePacket(GKV_PacketBase* buf)
 {
     char str[30];
 
@@ -254,8 +254,8 @@ void RecognisePacket(PacketBase* buf)
     {
     case GKV_ADC_CODES_PACKET:
     {
-        ADCData* packet;
-        packet = (ADCData*)&buf->data;
+        GKV_ADCData* packet;
+        packet = (GKV_ADCData*)&buf->data;
         printf("ADC Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf("Sample Counter = %s", str);
@@ -281,8 +281,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_RAW_DATA_PACKET:
     {
-        RawData* packet;
-        packet = (RawData*)&buf->data;
+        GKV_RawData* packet;
+        packet = (GKV_RawData*)&buf->data;
         printf("Raw Sensors Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf("Sample Counter = %s", str);
@@ -308,8 +308,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_EULER_ANGLES_PACKET:
     {
-        GyrovertData* packet;
-        packet = (GyrovertData*)&buf->data;
+        GKV_GyrovertData* packet;
+        packet = (GKV_GyrovertData*)&buf->data;
         printf(" Gyrovert Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
@@ -323,8 +323,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_INCLINOMETER_PACKET:
     {
-        InclinometerData* packet;
-        packet = (InclinometerData*)&buf->data;
+        GKV_InclinometerData* packet;
+        packet = (GKV_InclinometerData*)&buf->data;
         printf("Inclinometer Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
@@ -336,8 +336,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_BINS_PACKET:
     {
-        BINSData* packet;
-        packet = (BINSData*)&buf->data;
+        GKV_BINSData* packet;
+        packet = (GKV_BINSData*)&buf->data;
         printf("BINS Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
@@ -369,8 +369,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_GNSS_PACKET:
     {
-        GpsData* packet;
-        packet = (GpsData*)&buf->data;
+        GKV_GpsData* packet;
+        packet = (GKV_GpsData*)&buf->data;
         printf(" GNSS Data Packet: ");
         sprintf(str, "%f", packet->time);
         printf(" time = %s", str);
@@ -392,8 +392,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_CUSTOM_PACKET:
     {
-        CustomData* packet;
-        packet = (CustomData*)&buf->data;
+        GKV_CustomData* packet;
+        packet = (GKV_CustomData*)&buf->data;
         printf("CustomPacket: ");
         uint8_t i;
         for (i = 0; i < ((buf->length) / 4); i++)

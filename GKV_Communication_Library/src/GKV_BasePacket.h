@@ -42,23 +42,23 @@
   * @brief    parameters of each packet (preamble, device address, max length of 'data' field)
   * @{
   */ 
-#define DATA_LENGTH  255                /*  max length of field "data" of each packet */
-#define PREAMBLE_VALUE  255             /*  beginning of each packet */
-#define DEFAULT_ADDRESS  1              /*  default address of each sending device */
+#define GKV_DATA_LENGTH  255                /*  max length of field "data" of each packet */
+#define GKV_PREAMBLE_VALUE  255             /*  beginning of each packet */
+#define GKV_DEFAULT_ADDRESS  1              /*  default address of each sending device */
 
 #include <stdint.h>
 
 /** 
   * @brief  Template for each request (to gkv)/response (from gkv) packet 
   */
-typedef struct __PacketBase
+typedef struct __GKV_PacketBase
 {
 	uint8_t preamble;                   /*	always 255	*/
 	uint8_t address;                    /*	address of sending	device  */
 	uint8_t type;                       /*	type of the packet	*/
 	uint8_t length;                     /*	length of data fields (without checksum)	*/
-	uint8_t data[DATA_LENGTH + 4];      /*	all data that packet's containing including checksum	*/
-}PacketBase;
+	uint8_t data[GKV_DATA_LENGTH + 4];      /*	all data that packet's containing including checksum	*/
+}GKV_PacketBase;
 
 
 /*---------------------------------------------------------------------------------------------------------------*/

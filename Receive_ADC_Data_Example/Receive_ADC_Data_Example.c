@@ -7,15 +7,15 @@ HANDLE hSerial;
 
 uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
-void WriteCOM(PacketBase* buf);
-void RecognisePacket(PacketBase* buf);
+void WriteCOM(GKV_PacketBase* buf);
+void RecognisePacket(GKV_PacketBase* buf);
 char* cin(int* length);
 
 int main()
 {
     int length = 0;
     uint8_t Packet_is_Correct = 0;
-    uint8_t algorithm = ADC_CODES_ALGORITHM;
+    uint8_t algorithm = GKV_ADC_CODES_ALGORITHM;
     uint8_t algorithm_packet = GKV_ADC_CODES_PACKET;
     uint8_t algorithm_selected = 0;
     /* Select serial port*/
@@ -34,7 +34,7 @@ int main()
     int incorrectCnt = 0;
     while (!(algorithm_selected))
     {
-        Set_Algorithm(&GKV, algorithm);
+        GKV_SetAlgorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
         {
@@ -112,7 +112,7 @@ char* cin(int* length) {
     return str;
 }
 
-void WriteCOM(PacketBase* buf)
+void WriteCOM(GKV_PacketBase* buf)
 {
     DWORD dwBytesWritten;
     char iRet = WriteFile(hSerial, buf, buf->length + 8, &dwBytesWritten, NULL);
@@ -132,7 +132,7 @@ char ReadCOM()
 
 /* User Callback on any Received Packet */
 
-void RecognisePacket(PacketBase* buf)
+void RecognisePacket(GKV_PacketBase* buf)
 {
     char str[30];
 
@@ -140,8 +140,8 @@ void RecognisePacket(PacketBase* buf)
     {
         case GKV_ADC_CODES_PACKET:
         {
-            ADCData* packet;
-            packet = (ADCData*)&buf->data;
+            GKV_ADCData* packet;
+            packet = (GKV_ADCData*)&buf->data;
             sprintf(str, "%d", packet->sample_cnt);
             printf("Sample Counter = %s", str);
 
@@ -166,8 +166,8 @@ void RecognisePacket(PacketBase* buf)
         }
         case GKV_GNSS_PACKET:
         {
-            GpsData* packet;
-            packet = (GpsData*)&buf->data;
+            GKV_GpsData* packet;
+            packet = (GKV_GpsData*)&buf->data;
             printf(" GNSS Data Packet: ");
             sprintf(str, "%f", packet->time);
             printf(" time = %s", str);

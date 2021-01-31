@@ -11,8 +11,8 @@ int SerialPortHandle;
 
 uint8_t InitSerialPort(char* port_name, int32_t baudrate);
 char ReadCOM();
-void WriteCOM(PacketBase* buf);
-void RecognisePacket(PacketBase* buf);
+void WriteCOM(GKV_PacketBase* buf);
+void RecognisePacket(GKV_PacketBase* buf);
 char* cin(int* length);
 
 int main()
@@ -95,7 +95,7 @@ char* cin(int* length) {
     return str;
 }
 
-void WriteCOM(PacketBase* buf)
+void WriteCOM(GKV_PacketBase* buf)
 {
     int iOut = write(SerialPortHandle, buf, buf->length + 8);
     usleep(1000);
@@ -114,7 +114,7 @@ char ReadCOM()
 
 /* User Callback on any Received Packet */
 
-void RecognisePacket(PacketBase* buf)
+void RecognisePacket(GKV_PacketBase* buf)
 {
     char str[30];
 
@@ -122,8 +122,8 @@ void RecognisePacket(PacketBase* buf)
     {
     case GKV_ADC_CODES_PACKET:
     {
-        ADCData* packet;
-        packet = (ADCData*)&buf->data;
+        GKV_ADCData* packet;
+        packet = (GKV_ADCData*)&buf->data;
         printf("ADC Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf("Sample Counter = %s", str);
@@ -149,8 +149,8 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_RAW_DATA_PACKET:
     {
-        RawData* packet;
-        packet = (RawData*)&buf->data;
+        GKV_RawData* packet;
+        packet = (GKV_RawData*)&buf->data;
         printf("Raw Sensors Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf("Sample Counter = %s", str);
@@ -176,118 +176,94 @@ void RecognisePacket(PacketBase* buf)
     }
     case GKV_EULER_ANGLES_PACKET:
     {
-        GyrovertData* packet;
-        packet = (GyrovertData*)&buf->data;
+        GKV_GyrovertData* packet;
+        packet = (GKV_GyrovertData*)&buf->data;
         printf(" Gyrovert Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
-
         sprintf(str, "%f", packet->yaw);
         printf(" yaw = %s", str);
-
         sprintf(str, "%f", packet->pitch);
         printf(" pitch = %s", str);
-
         sprintf(str, "%f", packet->roll);
         printf(" roll = %s\n", str);
         break;
     }
     case GKV_INCLINOMETER_PACKET:
     {
-        InclinometerData* packet;
-        packet = (InclinometerData*)&buf->data;
+        GKV_InclinometerData* packet;
+        packet = (GKV_InclinometerData*)&buf->data;
         printf("Inclinometer Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
-
         sprintf(str, "%f", packet->alfa);
         printf(" alfa = %s", str);
-
         sprintf(str, "%f", packet->beta);
         printf(" beta = %s\n", str);
         break;
     }
     case GKV_BINS_PACKET:
     {
-        BINSData* packet;
-        packet = (BINSData*)&buf->data;
+        GKV_BINSData* packet;
+        packet = (GKV_BINSData*)&buf->data;
         printf("BINS Data Packet: ");
         sprintf(str, "%d", packet->sample_cnt);
         printf(" Sample Counter = %s", str);
-
         sprintf(str, "%f", packet->x);
         printf(" x = %s", str);
-
         sprintf(str, "%f", packet->y);
         printf(" y = %s", str);
-
         sprintf(str, "%f", packet->z);
         printf(" z = %s", str);
-
         sprintf(str, "%f", packet->alfa);
         printf(" alfa = %s", str);
-
         sprintf(str, "%f", packet->beta);
         printf("beta = %s", str);
-
         sprintf(str, "%f", packet->q[0]);
         printf(" q0 = %s", str);
-
         sprintf(str, "%f", packet->q[1]);
         printf(" q1 = %s", str);
-
         sprintf(str, "%f", packet->q[2]);
         printf(" q2 = %s", str);
-
         sprintf(str, "%f", packet->q[3]);
         printf(" q3 = %s", str);
-
         sprintf(str, "%f", packet->yaw);
         printf(" yaw = %s", str);
-
         sprintf(str, "%f", packet->pitch);
         printf(" pitch = %s", str);
-
         sprintf(str, "%f", packet->roll);
         printf(" roll = %s\n", str);
         break;
     }
     case GKV_GNSS_PACKET:
     {
-        GpsData* packet;
-        packet = (GpsData*)&buf->data;
+        GKV_GpsData* packet;
+        packet = (GKV_GpsData*)&buf->data;
         printf(" GNSS Data Packet: ");
         sprintf(str, "%f", packet->time);
         printf(" time = %s", str);
-
         sprintf(str, "%f", packet->latitude);
         printf(" latitude = %s", str);
-
         sprintf(str, "%f", packet->longitude);
         printf(" longitude = %s", str);
-
         sprintf(str, "%f", packet->altitude);
         printf(" altitude = %s", str);
-
         sprintf(str, "%d", packet->state_status);
         printf(" state_status = %s", str);
-
         sprintf(str, "%f", packet->TDOP);
         printf(" TDOP = %s", str);
-
         sprintf(str, "%f", packet->HDOP);
         printf(" HDOP = %s", str);
-
         sprintf(str, "%f", packet->VDOP);
         printf(" VDOP = %s\n", str);
         break;
     }
     case GKV_CUSTOM_PACKET:
     {
-        CustomData* packet;
-        packet = (CustomData*)&buf->data;
-        uint8_t i;
+        GKV_CustomData* packet;
+        packet = (GKV_CustomData*)&buf->data;
         printf("CustomPacket: ");
+        uint8_t i;
         for (i = 0; i < ((buf->length) / 4); i++)
         {
             if (packet->parameter[i] == packet->parameter[i])// проверка на isnan

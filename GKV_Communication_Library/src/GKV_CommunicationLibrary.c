@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-const uint32_t crc32_tabl[] =
+const uint32_t GKV_crc32_tabl[] =
 {
 	0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
 	0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91, 0x1DB71064,
@@ -39,7 +39,7 @@ const uint32_t crc32_tabl[] =
 };
 
 /**
-  * @name	Configure_Output_Packet
+  * @name	GKV_ConfigureOutputPacket
   * @brief  Function inserts selected packet structure into base packet structure, sets values for basic fields and computes crc32.
   * @param  Output_Packet_Ptr - pointer on beginning of base packet structure that should be transmitted to GKV (pointer on full transmitting packet)
   * @param  type - unsigned char value for type of transmitting packet
@@ -47,7 +47,7 @@ const uint32_t crc32_tabl[] =
   * @param	size - length of data that should be copied from "data_ptr" into "data" field of transmitting packet
   * @retval no return value.
   */
-void Configure_Output_Packet(PacketBase * Output_Packet_Ptr, uint8_t type, void *data_ptr, uint8_t size)
+void GKV_ConfigureOutputPacket(GKV_PacketBase* Output_Packet_Ptr, uint8_t type, void *data_ptr, uint8_t size)
 {
 
 	Output_Packet_Ptr->preamble = 0xFF;
@@ -55,133 +55,132 @@ void Configure_Output_Packet(PacketBase * Output_Packet_Ptr, uint8_t type, void 
 	Output_Packet_Ptr->type = type;
 	Output_Packet_Ptr->length = size;
 	memcpy(Output_Packet_Ptr->data, data_ptr, size);
-	*((uint32_t*)&Output_Packet_Ptr->data[size]) = crc32_compute(Output_Packet_Ptr, Output_Packet_Ptr->length + 4);
+	*((uint32_t*)&Output_Packet_Ptr->data[size]) = GKV_crc32_compute(Output_Packet_Ptr, Output_Packet_Ptr->length + 4);
 }
 
 
 /**
-  * @name	Check_Connection
+  * @name	GKV_CheckConnection
   * @brief  Function configures base packet of 0x00 type and sends it to GKV to check connection. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @retval no return value.
   */
-void Check_Connection(GKV_Device *GKV)
+void GKV_Check_Connection(GKV_Device *GKV)
 {
 	uint8_t type = GKV_CHECK_PACKET;
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, 0, 0);
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, 0, 0);
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 
 
 
 /**
-  * @name	Request_Data
+  * @name	GKV_RequestData
   * @brief  Function configures base packet of 0x17 type and sends it to GKV to request data packet in "By_Request" GKV data-sending mode. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @retval no return value.
   */
-void Request_Data(GKV_Device* GKV)
+void GKV_RequestData(GKV_Device* GKV)
 {
 	uint8_t type = GKV_DATA_REQUEST;
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, 0, 0);
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, 0, 0);
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 
 
 /**
-  * @name	Set_Baudrate
+  * @name	GKV_SetBaudrate
   * @brief  Function configures base packet of 0x06 type and sends it to GKV to set new baudrate. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @param  baudrate_register_value - value for "uart_baud_rate" field of Settings packet structure. List of values - "Baudrate" defgroup
   * @retval no return value.
   */
-void Set_Baudrate(GKV_Device* GKV, uint8_t baudrate_register_value)
+void GKV_SetBaudrate(GKV_Device* GKV, uint8_t baudrate_register_value)
 {
-	Settings GKV_Settings;
-	memset(&GKV_Settings, 0, sizeof(GKV_Settings));
+	GKV_Settings Settings;
+	memset(&Settings, 0, sizeof(Settings));
 	uint8_t type = GKV_DEV_SETTINGS_PACKET;
 
-	if (baudrate_register_value <= BAUDRATE_3000000)
+	if (baudrate_register_value <= GKV_BAUDRATE_3000000)
 	{
-		GKV_Settings.param_mask |= CHANGE_BAUDRATE;
-		GKV_Settings.uart_baud_rate = baudrate_register_value;
+		Settings.param_mask |= GKV_CHANGE_BAUDRATE;
+		Settings.uart_baud_rate = baudrate_register_value;
 	}
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, &GKV_Settings, sizeof(GKV_Settings));
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, &Settings, sizeof(Settings));
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 
 /**
-  * @name	Set_Default_Algorithm_Packet
+  * @name	GKV_SetDefaultAlgorithmPacket
   * @brief  Function configures base packet of 0x06 type and sends it to GKV to set sending mode as default packet for current algorithm. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @retval no return value.
   */
-void Set_Default_Algorithm_Packet(GKV_Device* GKV)
+void GKV_SetDefaultAlgorithmPacket(GKV_Device* GKV)
 {
-	Settings GKV_Settings;
-	memset(&GKV_Settings, 0, sizeof(GKV_Settings));
+	GKV_Settings Settings;
+	memset(&Settings, 0, sizeof(Settings));
 	uint8_t type = GKV_DEV_SETTINGS_PACKET;
 
-	GKV_Settings.mode = SET_DEFAULT_ALGORITHM_PACKET;
-	GKV_Settings.mode_mask = ALLOW_CHANGE_SELECTED_PACKET;
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, &GKV_Settings, sizeof(GKV_Settings));
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	Settings.mode = GKV_SET_DEFAULT_ALGORITHM_PACKET;
+	Settings.mode_mask = GKV_ALLOW_CHANGE_SELECTED_PACKET;
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, &Settings, sizeof(Settings));
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 /**
-  * @name	Set_Custom_Algorithm_Packet
+  * @name	GKV_SetCustomAlgorithmPacket
   * @brief  Function configures base packet of 0x06 type and sends it to GKV to set sending mode as custom packet for current algorithm. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @retval no return value.
   */
-void Set_Custom_Algorithm_Packet(GKV_Device* GKV)
+void GKV_SetCustomAlgorithmPacket(GKV_Device* GKV)
 {
-	
-	Settings GKV_Settings;
-	memset(&GKV_Settings, 0, sizeof(GKV_Settings));
+	GKV_Settings Settings;
+	memset(&Settings, 0, sizeof(Settings));
 	uint8_t type = GKV_DEV_SETTINGS_PACKET;
-	GKV_Settings.mode = SET_CUSTOM_PACKET;
-	GKV_Settings.mode_mask = ALLOW_CHANGE_SELECTED_PACKET;
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, &GKV_Settings, sizeof(GKV_Settings));
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	Settings.mode = GKV_SET_CUSTOM_PACKET;
+	Settings.mode_mask = GKV_ALLOW_CHANGE_SELECTED_PACKET;
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, &Settings, sizeof(Settings));
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 
 /**
-  * @name	Set_Algorithm
+  * @name	GKV_SetAlgorithm
   * @brief  Function configures base packet of 0x06 type and sends it to GKV to set one of device algorithms. Sending via callback function SendPacketFun
   * @param  GKV - pointer on selected structure of connected GKV device
   * @param  algorithm_register_value - value for "algorithm" field of Settings packet structure. List of values - "CURRENT_ALGORITHM" defgroup
   * @retval no return value.
   */
-void Set_Algorithm(GKV_Device* GKV, uint8_t algorithm_register_value)
+void GKV_SetAlgorithm(GKV_Device* GKV, uint8_t algorithm_register_value)
 {
-	Settings GKV_Settings;
-	memset(&GKV_Settings, 0, sizeof(GKV_Settings));
+	GKV_Settings Settings;
+	memset(&Settings, 0, sizeof(Settings));
 	uint8_t type = GKV_DEV_SETTINGS_PACKET;
 
-	if (algorithm_register_value <= KALMAN_GNSS_NAVIGATON_ALGORITHM)
+	if (algorithm_register_value <= GKV_KALMAN_GNSS_NAVIGATON_ALGORITHM)
 	{
-		GKV_Settings.param_mask |= CHANGE_ALGORITHM;
-		GKV_Settings.algorithm = algorithm_register_value;
+		Settings.param_mask |= GKV_CHANGE_ALGORITHM;
+		Settings.algorithm = algorithm_register_value;
 	}
-	Configure_Output_Packet(&(GKV->OuputBuffer), type, &GKV_Settings, sizeof(GKV_Settings));
-	Send_Data((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
+	GKV_ConfigureOutputPacket(&(GKV->OuputBuffer), type, &Settings, sizeof(Settings));
+	GKV_SendData((GKV->ptrDataSendFunction), &(GKV->OuputBuffer));
 }
 
 
 
 /**
-  * @name	Send_Data
+  * @name	GKV_SendData
   * @brief  Function run void callback function that sending data to serial interface connected to GKV
   * @param  ptrSendPacketFun - pointer on void-type callback function that gets pointer on PacketBase structure and sends "length" fiels + 8 bytes
   * @param  Output_Packet_Ptr - pointer on beginning of base packet structure that should be transmitted to GKV (pointer on full transmitting packet) 
   * @retval no return value.
   */
-void Send_Data(void(*ptrSendPacketFun)(PacketBase* Output_Packet_Ptr), PacketBase* Output_Packet_Ptr)
+void GKV_SendData(void(*ptrSendPacketFun)(GKV_PacketBase* Output_Packet_Ptr), GKV_PacketBase* Output_Packet_Ptr)
 {
 	if (!((ptrSendPacketFun) == NULL))
 	{
@@ -192,13 +191,13 @@ void Send_Data(void(*ptrSendPacketFun)(PacketBase* Output_Packet_Ptr), PacketBas
 
 /*------------------------------Receiving_Data_Parser----------------------------------------------------------------------*/
 
-#define NOT_ENOUGH				0x00
-#define REFIND_PREAMBLE			0x01
-#define CHECK_OK				0x02
+#define GKV_NOT_ENOUGH				0x00
+#define GKV_REFIND_PREAMBLE			0x01
+#define GKV_CHECK_OK				0x02
 
 
 /**
-  * @name	GKV_Init_Input
+  * @name	Init_GKV_Device
   * @brief  Function initiates with zeros structure that includes input and output GKV Buffers and pointers on packet received callback and sending data function
   * @param  GKV - pointer on selected structure of connected GKV device
   * @retval no return value.
@@ -215,14 +214,14 @@ void Init_GKV_Device(GKV_Device* GKV)
 
 
 /**
-  * @name	put
+  * @name	GKV_put
   * @brief  Function checks current received byte, searching preamble and after finding it puts it into input packet buffer and increments counter
   * @param  b - byte received from UART/COM-port connected to GKV
   * @param  ptr_cnt - pointer on byte counter in input packet buffer
   * @param  buf - pointer on beginning of input packet buffer
   * @retval function returns result of searching preamble and returns zero until it found.
   */
-uint8_t put(uint8_t b, uint32_t *ptr_cnt, PacketBase *buf)//проверка на преамбулу
+uint8_t GKV_put(uint8_t b, uint32_t *ptr_cnt, GKV_PacketBase*buf)//проверка на преамбулу
 {
 	if (*ptr_cnt == 0)
 	{
@@ -248,12 +247,12 @@ uint8_t put(uint8_t b, uint32_t *ptr_cnt, PacketBase *buf)//проверка н�
 uint8_t GKV_ReceiveProcess(GKV_Device * GKV, char ReceivedByte)
 {
 	uint32_t * ptr_cnt = (uint32_t *)&(GKV->CTR);
-	PacketBase* ptr_buf = (PacketBase*)&(GKV->InputBuffer);
+	GKV_PacketBase* ptr_buf = (GKV_PacketBase*)&(GKV->InputBuffer);
 	char b = ReceivedByte;
 
-	if (put(b, ptr_cnt, ptr_buf))
+	if (GKV_put(b, ptr_cnt, ptr_buf))
 	{
-		return parseCycle(GKV->ptrRecognisePacketCallback, ptr_cnt, ptr_buf);
+		return GKV_parseCycle(GKV->ptrRecognisePacketCallback, ptr_cnt, ptr_buf);
 	}
 	return 0;
 }
@@ -262,39 +261,39 @@ uint8_t GKV_ReceiveProcess(GKV_Device * GKV, char ReceivedByte)
 
 
 /**
-  * @name	parseCycle
+  * @name	GKV_parseCycle
   * @brief  Parcing cycle function. When new byte added to input packet buffer. Function checks number of received bytes and checksum result.
   * @param  ptrRecognisePacket - pointer on user callback function that should process packet when correct packet receive
   * @param  ptr_cnt - pointer on byte counter in input packet buffer
   * @param  buf - pointer on beginning of input packet buffer
   * @retval function returns result of searching correct packet. 0x00 - not enough bytes received, 0x01 - checksum is incorrect, 0x02 - packet checked
   */
-uint8_t parseCycle(void (*ptrRecognisePacket)(PacketBase* buf), uint32_t* ptr_cnt, PacketBase* buf)
+uint8_t GKV_parseCycle(void (*ptrRecognisePacket)(GKV_PacketBase* buf), uint32_t* ptr_cnt, GKV_PacketBase* buf)
 {
 	uint8_t status = 0;
 	while (1)
 	{
-		status = parse(ptr_cnt, buf);
-		if (status == NOT_ENOUGH)
+		status = GKV_parse(ptr_cnt, buf);
+		if (status == GKV_NOT_ENOUGH)
 		{
 			break;
 		}
-		else if (status == REFIND_PREAMBLE)
+		else if (status == GKV_REFIND_PREAMBLE)
 		{
-			if (!refind_preamble(1, ptr_cnt, buf))
+			if (!GKV_refind_preamble(1, ptr_cnt, buf))
 				break;
 		}
-		else if (status == CHECK_OK)
+		else if (status == GKV_CHECK_OK)
 		{
 			if (!((ptrRecognisePacket) == NULL))
 			{
 				ptrRecognisePacket(buf);
 			}
-			if (!refind_preamble((buf->length) + 8, ptr_cnt, buf))
+			if (!GKV_refind_preamble((buf->length) + 8, ptr_cnt, buf))
 				break;
 		}
 	}
-	if (status < CHECK_OK)
+	if (status < GKV_CHECK_OK)
 	{
 		status = 0;
 	}
@@ -304,14 +303,14 @@ uint8_t parseCycle(void (*ptrRecognisePacket)(PacketBase* buf), uint32_t* ptr_cn
 
 
 /**
-  * @name	refind_preamble
+  * @name	GKV_refind_preamble
   * @brief  Moving memory function when checksum is incorrect to check next 0xFF as preamble or moving memory when correct packet processed. 
   * @param  start - byte with number of start byte to move memory when checksum is incorrect (1) or when received packet is correct (buf->length) + 8 .
   * @param  ptr_cnt - pointer on byte counter in input packet buffer
   * @param  buf - pointer on beginning of input packet buffer
   * @retval Function returns 1 when 0xFF found after memory moving and 0, when it wasn't found.
   */
-uint8_t refind_preamble(int start, uint32_t *ptr_cnt, PacketBase *buf)
+uint8_t GKV_refind_preamble(int start, uint32_t *ptr_cnt, GKV_PacketBase*buf)
 {
 	uint8_t * in_buf = (uint8_t*)(buf);
 	for (int i = start; i < *ptr_cnt; i++)
@@ -330,51 +329,51 @@ uint8_t refind_preamble(int start, uint32_t *ptr_cnt, PacketBase *buf)
 
 
 /**
-  * @name	parse
+  * @name	GKV_parse
   * @brief  Parcing step function. Trying to find correct packet in current number of received bytes 
   * @param  ptr_cnt - pointer on byte counter in input packet buffer
   * @param  buf - pointer on beginning of input packet buffer
   * @retval function returns result of searching correct packet. 0x00 - not enough bytes received, 0x01 - checksum is incorrect, 0x02 - packet checked
   */
-uint8_t parse(uint32_t *ptr_cnt, PacketBase *buf)
+uint8_t GKV_parse(uint32_t *ptr_cnt, GKV_PacketBase*buf)
 {
 	if (*ptr_cnt >= 4)
 	{
-		if (buf->length > DATA_LENGTH)
+		if (buf->length > GKV_DATA_LENGTH)
 		{
-			return REFIND_PREAMBLE;
+			return GKV_REFIND_PREAMBLE;
 		}
 	}
 
 	if (*ptr_cnt < (buf->length)+8)
 	{
-		return NOT_ENOUGH;
+		return GKV_NOT_ENOUGH;
 	}
-	if (!check(buf))
+	if (!GKV_check(buf))
 	{
-		return REFIND_PREAMBLE;
+		return GKV_REFIND_PREAMBLE;
 	}
 
-	return CHECK_OK;
+	return GKV_CHECK_OK;
 }
 
 
 
 /**
-  * @name	crc32_compute
+  * @name	GKV_crc32_compute
   * @brief  CRC32 checksum calculation
   * @param  buf - pointer on beginning of packet
   * @param  size - length of packet without checksum
   * @retval function returns result crc32 calculation.
   */
-uint32_t crc32_compute(const void* buf, unsigned long size)
+uint32_t GKV_crc32_compute(const void* buf, unsigned long size)
 {
 	uint32_t crc = 0;
 	const uint8_t* p = (const uint8_t*)buf;
 	crc = crc ^ 0xFFFFFFFFUL;
 
 	while (size--)
-		crc = crc32_tabl[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+		crc = GKV_crc32_tabl[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
 
 	return crc ^ 0xFFFFFFFFUL;
 }
@@ -382,19 +381,19 @@ uint32_t crc32_compute(const void* buf, unsigned long size)
 
 
 /**
-  * @name	check
+  * @name	GKV_check
   * @brief  chcecking input packet buffer for crc32
   * @param  pack - pointer on beginning of input packet buffer
   * @retval function returns result of checking crc32. 0x00 - checksum is incorrect, 0x01 - checksum is correct
   */
-uint8_t check(PacketBase* pack)
+uint8_t GKV_check(GKV_PacketBase* pack)
 {
 	if (pack->preamble != 0xFF)
 		return false;
 	if (pack->length > 255)
 		return false;
 
-	uint32_t crc = crc32_compute(pack, pack->length + 4);
+	uint32_t crc = GKV_crc32_compute(pack, pack->length + 4);
 	uint8_t* p = &pack->data[pack->length];
 	uint8_t* t = (uint8_t*)&crc;
 	if (*p++ != *t++) return false;
