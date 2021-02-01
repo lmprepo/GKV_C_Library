@@ -28,7 +28,7 @@ int main()
     printf("#start connecting to %s\n", com_port);
 
     uint8_t Packet_is_Correct = 0;
-    uint8_t algorithm = ADC_CODES_ALGORITHM;
+    uint8_t algorithm = GKV_ADC_CODES_ALGORITHM;
     uint8_t algorithm_packet = GKV_ADC_CODES_PACKET;
     uint8_t algorithm_selected = 0;
 
