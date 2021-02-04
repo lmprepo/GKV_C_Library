@@ -9,7 +9,6 @@ add_library(GKV_Communication_Library
     src/GKV_CustomPacket.h
     src/GKV_FilterPacket.h
     src/GKV_GyroOffsetPacket.h
-    src/GKV_SelfTestPacket.h
     src/GKV_SettingsPacket.h
     src/GKV_TestPacket.h)
 
