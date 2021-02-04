@@ -43,7 +43,7 @@
 #include "GKV_AlorithmPackets.h"
 #include "GKV_CustomPacket.h"
 #include "GKV_FilterPacket.h"
-#include "GKV_SelfTestPacket.h"
+//#include "GKV_SelfTestPacket.h"
 #include "GKV_AlgParamPacket.h"
 #include "GKV_GyroOffsetPacket.h"
 
