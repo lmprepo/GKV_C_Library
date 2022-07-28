@@ -34,10 +34,11 @@ int main()
     printf("#start connecting to %s\n", com_port);
     if (!(InitSerialPort(com_port, B921600))) return 1;
     /* Waiting for device connection and selecting algorithm */
-    const int MAX_INCORRECT_CNT = 1000;
+    const int MAX_INCORRECT_CNT = 5000;
     int incorrectCnt = 0;
     while (!(algorithm_selected))
     {
+        GKV_SetDefaultAlgorithmPacket(&GKV);//функция выбора пакета алгоритма по умолчанию
         GKV_SetAlgorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
