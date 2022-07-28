@@ -16,7 +16,9 @@ int main()
     int length = 0;
     /* Select serial port*/
     printf("Set Serial Port:");
-    char* com_port = cin(&length);
+    char* serial_preamble = "\\\\.\\";// for COM10+
+    char* port_name = cin(&length);
+    char* com_port = strcat(serial_preamble, port_name);
     /* Init GKV Receive Data Structure */
     GKV_Device GKV;
     Init_GKV_Device(&GKV);

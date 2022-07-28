@@ -18,8 +18,9 @@ int main()
     int length = 0;
 
     printf("Set Serial Port:");
-    char* com_port = cin(&length);
-
+    char* serial_preamble = "\\\\.\\";// for COM10+
+    char* port_name = cin(&length);
+    char* com_port = strcat(serial_preamble, port_name);
     printf("#start connecting to %s\n", com_port);
 
     uint8_t Packet_is_Correct = 0;

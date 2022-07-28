@@ -20,7 +20,9 @@ int main()
     uint8_t algorithm_selected = 0;
     /* Select serial port*/
     printf("Set Serial Port:");
-    char* com_port = cin(&length);
+    char* serial_preamble = "\\\\.\\";// for COM10+
+    char* port_name = cin(&length);
+    char* com_port = strcat(serial_preamble, port_name);
     /* Init GKV Receive Data Structure */
     GKV_Device GKV;
     Init_GKV_Device(&GKV);
@@ -30,10 +32,11 @@ int main()
     printf("#start connecting to %s\n", com_port);
     if (!(InitSerialPort(com_port, 921600))) return 1;
     /* Waiting for device connection and selecting algorithm */
-    const int MAX_INCORRECT_CNT = 1000;
+    const int MAX_INCORRECT_CNT = 10000;
     int incorrectCnt = 0;
     while (!(algorithm_selected))
     {
+        GKV_SetDefaultAlgorithmPacket(&GKV);//функция выбора пакета алгоритма по умолчанию
         GKV_SetAlgorithm(&GKV, algorithm);
         Packet_is_Correct = 0;
         while (!(Packet_is_Correct))
